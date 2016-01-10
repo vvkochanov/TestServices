@@ -1,13 +1,13 @@
 package testservices.vvkservices.rhcloud.com.testservices;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
@@ -18,7 +18,8 @@ public class FirstIntentService extends IntentService {
 
     private final static String TAG = "FirstIntentService: ";
     private final static String name = "FirstIntentService";
-    private final FirstBinder mBinder = new FirstBinder();
+    private final IBinder mBinder = new FirstBinder();
+    private BroadcastNotifier mNotifier;
 
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
@@ -27,6 +28,7 @@ public class FirstIntentService extends IntentService {
      */
     public FirstIntentService() {
         super(name);
+        mNotifier = new BroadcastNotifier(this);
         Log.i(TAG, "constructor, thread - " + name);
     }
 
@@ -65,6 +67,7 @@ public class FirstIntentService extends IntentService {
         Log.i(TAG, "onHandleIntent Begin...");
         long beg_time = System.currentTimeMillis();
 
+        mNotifier.sendStatusNotify(Constants.BROADCAST_START_SVC);
         List<DownloadInThread> threads = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
                 Log.v(TAG, String.format("Service create new Thread %d ...", i));
@@ -83,6 +86,24 @@ public class FirstIntentService extends IntentService {
         }
         long end_time = System.currentTimeMillis();
         Log.i(TAG, String.format("onHandleIntent End. Time of work: %d sec.", (end_time - beg_time)/1000));
+        mNotifier.sendStatusNotify(Constants.BROADCAST_STOP_SVC);
+    }
+
+    /**
+     * метод запускающий сервис после его присоединения bindService
+     */
+    public static void actionStartService(Context context){
+        Intent intent = new Intent(context, FirstIntentService.class);
+        intent.setAction("testservices.vvkservices.rhcloud.com.testservices.ACTION_START");
+//        intent.putExtra(Const.EXTRA_UPD_TARGET, updateTarget);
+//        intent.putExtra(Const.EXTRA_CODE_OF_ELEM, codeOfElement);
+        context.startService(intent);
+    }
+
+    public class FirstBinder extends Binder {
+        FirstIntentService getService (){
+            return FirstIntentService.this;
+        }
     }
     /*******************************************
      * Inner classes
@@ -134,11 +155,5 @@ public class FirstIntentService extends IntentService {
             writeFile(String.format("File of %s.txt", threadName));
                 super.run();
             }
-    };
-
-    public class FirstBinder extends Binder {
-        FirstIntentService getService (){
-            return FirstIntentService.this;
-        }
     }
 }

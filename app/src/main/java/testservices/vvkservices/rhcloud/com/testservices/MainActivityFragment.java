@@ -1,10 +1,12 @@
 package testservices.vvkservices.rhcloud.com.testservices;
 
-import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ public class MainActivityFragment extends Fragment implements View.OnClickListen
     private Button startBtn;
     private Button bindBtn;
     private TextView textView1;
+
     public OnFragmentElemClickListener mListener;
 
     public interface OnFragmentElemClickListener {
@@ -57,5 +60,12 @@ public class MainActivityFragment extends Fragment implements View.OnClickListen
     @Override
     public void onClick(View v) {
         mListener.onElementClick(v);
+    }
+
+    /**
+     * метод для обновления текста TextView из основной активности
+     */
+    public void setTextView1(String newText){
+        textView1.setText(newText);
     }
 }

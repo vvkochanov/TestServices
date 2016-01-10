@@ -1,13 +1,17 @@
 package testservices.vvkservices.rhcloud.com.testservices;
 
+import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -20,6 +24,7 @@ import static testservices.vvkservices.rhcloud.com.testservices.FirstIntentServi
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnFragmentElemClickListener {
 
     private static final String TAG = "MainActivity";
+    private FIS_BroadcastReceiver fisBroadcastReceiver;
 
     private  boolean mBoundFrstService = false; // имеется ли привязка к сервису FirstIntentService
     private FirstIntentService mFrstSvc;
@@ -39,6 +44,11 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
                         .setAction("Action", null).show();
             }
         });
+        // теперь создаем фильтры для ресивера
+        IntentFilter mStartSVCIntentFilter = new IntentFilter(Constants.BROADCAST_START_SVC);
+        IntentFilter mStopSVCIntentFilter = new IntentFilter(Constants.BROADCAST_STOP_SVC);
+        LocalBroadcastManager.getInstance(this).registerReceiver(fisBroadcastReceiver, mStartSVCIntentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(fisBroadcastReceiver, mStopSVCIntentFilter);
     }
 
     @Override
@@ -85,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
                 }else {
                     unbindService(mConnection);
                     mBoundFrstService = false;
-                    Snackbar.make(view, "FirstIntentService is already binding!", Snackbar.LENGTH_LONG)
+                    Snackbar.make(view, "FirstIntentService is already binding! Unbind it!", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
         }
@@ -96,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
         public void onServiceConnected(ComponentName name, IBinder service) {
             FirstIntentService.FirstBinder binder = (FirstIntentService.FirstBinder) service;
             mFrstSvc = binder.getService();
+            FirstIntentService.actionStartService(getApplicationContext());
             mBoundFrstService = true;
             Log.i(TAG, "Service " + name.getShortClassName() + " is connected!");
         }
@@ -106,4 +117,19 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
             Log.i(TAG, "Service is disconnected!");
         }
     };
+    private class FIS_BroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MainActivityFragment mainActivityFragment = (MainActivityFragment) getSupportFragmentManager().findFragmentById(R.id.fragment);
+            switch (intent.getAction()){
+                case Constants.BROADCAST_START_SVC:
+                    mainActivityFragment.setTextView1("Запуск сервиса");
+                    return;
+                case Constants.BROADCAST_STOP_SVC:
+                    mainActivityFragment.setTextView1("Остановка сервиса");
+
+            }
+        }
+    }
+
 }
